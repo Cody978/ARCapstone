@@ -57,7 +57,7 @@ def parseXML(xmlfile):
 #Step 2: Find point with respect to ref
 def RespectToRef(List, length):
     i = 0
-    n = length - 1 #2
+    n = length - 1 
     newxArr = []
     newyArr = []
     newzArr = []
@@ -65,6 +65,7 @@ def RespectToRef(List, length):
 
     # x component
     while (i <= length-2):
+        # Master List = [(title1, title2, titleRef), (x1, x2, xRef), (y1, y2, yRef), (z1, z2, zRef)]
         # x = oldx - refx
         # refx is last x comp
         # oldx starts at first x comp
@@ -118,6 +119,51 @@ def NormalToDeck(List):
 
 #Step 5: Transform
 def Transform(List):
+    length = len(List)
+    length2 = int(length / 3)
+
+    # The code below only works for this specific XML file
+    # We need to make it universal
+    # was going to do that after adding a 2nd ref point
+    x1 = List[0]
+    y1 = List[length2]
+    x2 = List[1]
+    y2 = List[length2+1]
+   
+    #get angle using vector 1
+    angle = math.tan(y1/x1)
+    
+    #Angle matrix
+    cos = math.cos(angle)
+    sin = math.sin(angle)
+    sin0 = -math.sin(angle)
+
+    # cos, sin, -sin, cos
+    # Form matrix
+    T = np.array([[cos, sin], [sin0, cos]])
+
+    # Form matrix
+    Fem1 = np.array([[x1], [y1]])
+    Fem2 = np.array([[x2], [y2]])
+
+    #Matrix multiplication
+    TransformPt1 = T.dot(Fem1)
+    TransformPt2 = T.dot(Fem2)
+
+    #Transpose them
+    TransformPt1T = np.transpose(TransformPt1) #This step might not be needed
+    TransformPt2T = np.transpose(TransformPt2)
+
+    #Add z comp
+    NewTransformPt1 = np.append(TransformPt1T, [List[2*length2]])
+    NewTransformPt2 = np.append(TransformPt2T, [List[2*length2+1]])
+ 
+
+
+    return NewTransformPt1, NewTransformPt2
+
+
+
 
 
 
@@ -126,14 +172,17 @@ def Transform(List):
 
 
 def main():
-    print("Printing whole list")
+    
     List, length = parseXML('measuretest2.xml')
-    print(List)
     ToRef = RespectToRef(List, length)
     ToInches = ConvertToInches(ToRef)
-    #print(ToInches)
     NormalZ = NormalToDeck(ToInches)
-    print(NormalZ)
+    TransformPt1, TransformPt2 = Transform(NormalZ)
+
+    print(List)
+    print(TransformPt1)
+    print(TransformPt2)
+
 
 
 if __name__ == "__main__":
